@@ -2,7 +2,7 @@
 import User from '../entity/user.entity.js';
 import { AppDataSource } from '../config/configDb.js';
 import { userBodyValidation } from '../validations/user.validation.js';
-import { createUserService, getUserService } from '../services/user.service.js';
+import { createUserService, getUserService, updateUserService,deleteUserService } from '../services/user.service.js';
 
 
 export async function createUser(req, res) {
@@ -73,14 +73,18 @@ export async function getUsers(req, res) {
 
 export async function updateUser(req, res) {
     try {
-        const userRepository = AppDataSource.getRepository(User);
+        
 
         const id = req.params.id;
         const user = req.body;
+
+        const { value, error } = userBodyValidation.validate(user);
+
+        if(error) return res.status(400).json({
+            message: error.message
+        }) ///me devuelve error si la validacion lo encuentra
         
-        const userFound = await userRepository.findOne({
-            where: {id}
-        });
+        const userFound = await getUserService(id)// re uso el servicio de busqueda, si lo encuentra, continua
 
         if(!userFound) {
             return res.status(404).json({
@@ -89,15 +93,13 @@ export async function updateUser(req, res) {
             });
         }
 
-        await userRepository.update(id, user);
-
-        const userData = await userRepository.findOne({
-            where: {id}
-        });
+        const updatedUserData = await updateUserService(id,value)
 
         res.status(200).json({
-            message: "Usuario actualizado correctamente",
-            data: userData
+            message: "Usuario actualizado correctamente desde ",
+            data: userFound,updatedUserData,
+            
+            
         })
     } catch (error) {
         console.error("Error al actualizar un usuario: ", error);
@@ -107,13 +109,9 @@ export async function updateUser(req, res) {
 
 export async function deleteUser(req, res) {
     try {
-        const userRepository = AppDataSource.getRepository(User);
-
         const id = req.params.id;
-
-        const userFound = await userRepository.findOne({
-            where: {id}
-        });
+        
+        const userFound = await getUserService(id)// re uso el servicio de busqueda, si lo encuentra, continua
 
         if(!userFound) {
             return res.status(404).json({
@@ -122,8 +120,7 @@ export async function deleteUser(req, res) {
             });
         }
 
-        const userDeleted = await userRepository.remove(userFound);
-
+        const userDeleted = await deleteUserService(id);
         res.status(200).json({
             message: "Usuario eliminado correctamente",
             data: userDeleted
