@@ -37,3 +37,34 @@ export async function getUserService(id) {
         console.error("Error al obtener el usuario:", error);
     }
 }
+
+export async function updateUserService(id,user) {
+    try {
+        const userRepository = AppDataSource.getRepository(User);// asi se llama la entidad en user.entity
+
+        await userRepository.update(id,user);
+
+        const updatedUser = await userRepository.findOne({
+            where: { id }
+        });
+        
+
+        return updatedUser;
+    
+
+    } catch (error) {
+        console.error("Error al actualizar el usuario:", error);
+    }
+}
+
+export async function deleteUserService(id) {
+    try {
+        const userRepository = AppDataSource.getRepository(User);
+        const userToDelete = await userRepository.findOne({ where: { id } });
+        await userRepository.remove(userToDelete);
+
+        return userToDelete;
+    } catch (error) {
+        console.error("Error al eliminar el usuario:", error);
+    }
+}
