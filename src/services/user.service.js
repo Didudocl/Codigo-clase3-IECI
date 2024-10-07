@@ -2,6 +2,10 @@
 import User from '../entity/user.entity.js';
 import { AppDataSource } from '../config/configDb.js';
 
+/**
+ * Crea un usuario en la base de datos
+ */
+
 export async function createUserService(dataUser) {
     try {
         const userRepository = AppDataSource.getRepository(User);
@@ -34,6 +38,9 @@ export async function getUsersService() {
     }
 }
 
+/**
+ * Obtiene un usuario por id en la base de datos
+ */
 export async function getUserService(id) {
     try {
         const userRepository = AppDataSource.getRepository(User);
@@ -51,6 +58,10 @@ export async function getUserService(id) {
         console.error("Error al obtener el usuario:", error);
     }
 }
+
+/**
+ * Actualiza al usuario en la base de datos
+ */
 
 export async function updateUserService() {
     try {
@@ -72,6 +83,9 @@ export async function updateUserService() {
     }
 }
 
+/**
+ * Borra a un usuario de la base de datos
+ */
 export async function deleteUserService(id) {
     try {
         const userRepository = AppDataSource.getRepository(User);
@@ -83,7 +97,7 @@ export async function deleteUserService(id) {
         }
 
         await userRepository.remove(userToDelete);
-        
+
         return true;
     } catch (error) {
         console.error("Error al eliminar el usuario:", error);
