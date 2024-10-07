@@ -2,7 +2,7 @@
 import User from '../entity/user.entity.js';
 import { AppDataSource } from '../config/configDb.js';
 import { userBodyValidation } from '../validations/user.validation.js';
-import { createUserService, getUserService } from '../services/user.service.js';
+import { createUserService, getUserService, getUsersService } from '../services/user.service.js';
 
 
 export async function createUser(req, res) {
@@ -50,12 +50,10 @@ export async function getUser(req, res) {
 }
 
 export async function getUsers(req, res) {
-    try {
-        const userRepository = AppDataSource.getRepository(User);
+    try {     
+        const usersFound = await getUsersServiceService(id);
 
-        const users = await userRepository.find();
-
-        if(!users || users.length === 0) {
+        if(usersFound) {
             return res.status(404).json({
                 message: "No se encontraron usuarios",
                 data: null
@@ -73,14 +71,10 @@ export async function getUsers(req, res) {
 
 export async function updateUser(req, res) {
     try {
-        const userRepository = AppDataSource.getRepository(User);
 
         const id = req.params.id;
         const user = req.body;
-        
-        const userFound = await userRepository.findOne({
-            where: {id}
-        });
+        const userFound = await updateUserService.findOne(id,user);
 
         if(!userFound) {
             return res.status(404).json({
@@ -88,13 +82,6 @@ export async function updateUser(req, res) {
                 data: null
             });
         }
-
-        await userRepository.update(id, user);
-
-        const userData = await userRepository.findOne({
-            where: {id}
-        });
-
         res.status(200).json({
             message: "Usuario actualizado correctamente",
             data: userData
@@ -107,13 +94,9 @@ export async function updateUser(req, res) {
 
 export async function deleteUser(req, res) {
     try {
-        const userRepository = AppDataSource.getRepository(User);
-
         const id = req.params.id;
 
-        const userFound = await userRepository.findOne({
-            where: {id}
-        });
+        const userFound = await deleteUserService.findOne(id);
 
         if(!userFound) {
             return res.status(404).json({
@@ -121,8 +104,6 @@ export async function deleteUser(req, res) {
                 data: null
             });
         }
-
-        const userDeleted = await userRepository.remove(userFound);
 
         res.status(200).json({
             message: "Usuario eliminado correctamente",
