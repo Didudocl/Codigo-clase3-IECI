@@ -3,7 +3,6 @@ import User from '../entity/user.entity.js';
 import { AppDataSource } from '../config/configDb.js';
 import { userBodyValidation } from '../validations/user.validation.js';
 import { createUserService, getUserService, getUsersService, updateUserService, deleteUserService } from '../services/user.service.js';
-import { get } from 'express/lib/response.js';
 
 
 export async function createUser(req, res) {
