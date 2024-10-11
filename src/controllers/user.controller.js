@@ -1,135 +1,122 @@
 "use strict";
-import User from '../entity/user.entity.js';
-import { AppDataSource } from '../config/configDb.js';
-import { userBodyValidation } from '../validations/user.validation.js';
-import { createUserService, getUserService } from '../services/user.service.js';
-
+import User from "../entity/user.entity.js";
+import { AppDataSource } from "../config/configDb.js";
+import { userBodyValidation } from "../validations/user.validation.js";
+import {
+  createUserService,
+  deleteUserService,
+  getUserService,
+  getUsersService,
+  updateUserService,
+} from "../services/user.service.js";
 
 export async function createUser(req, res) {
-    try {
-        const user = req.body;
+  try {
+    const user = req.body;
 
-        const { value, error } = userBodyValidation.validate(user);
+    const { value, error } = userBodyValidation.validate(user);
 
-        if(error) return res.status(400).json({
-            message: error.message
-        })
+    if (error)
+      return res.status(400).json({
+        message: error.message,
+      });
 
-        const userSaved = await createUserService(value);
+    const userSaved = await createUserService(value);
 
-        res.status(201).json({
-            message: "Usuario creado exitosamente",
-            data: userSaved
-        })
-    } catch (error) {
-        console.error("Error al crear un usuario, el error es: ", error);
-    }
+    res.status(201).json({
+      message: "Usuario creado exitosamente",
+      data: userSaved,
+    });
+  } catch (error) {
+    console.error("Error al crear un usuario, el error es: ", error);
+  }
 }
 
 export async function getUser(req, res) {
-    try {
+  try {
+    const id = req.params.id;
 
-        const id = req.params.id;
+    const userFound = await getUserService(id);
 
-        const userFound = await getUserService(id);
-
-        if(!userFound) {
-            return res.status(404).json({
-                message: "Usuario no encontrado",
-                data: null
-            })
-        }
-
-        res.status(200).json({
-            message: "Usuario encontrado",
-            data: userFound
-        })
-    } catch (error) {
-        console.error('Error al obtener un usuario, el error: ', error);
+    if (!userFound) {
+      return res.status(404).json({
+        message: "Usuario no encontrado",
+        data: null,
+      });
     }
+
+    res.status(200).json({
+      message: "Usuario encontrado",
+      data: userFound,
+    });
+  } catch (error) {
+    console.error("Error al obtener un usuario, el error: ", error);
+  }
 }
 
 export async function getUsers(req, res) {
-    try {
-        const userRepository = AppDataSource.getRepository(User);
+  try {
+    const users = await getUsersService();
 
-        const users = await userRepository.find();
-
-        if(!users || users.length === 0) {
-            return res.status(404).json({
-                message: "No se encontraron usuarios",
-                data: null
-            })
-        }
-
-        res.status(200).json({
-            message: "Usuarios encontrados",
-            data: users
-        })
-    } catch (error) {
-        console.error('Error al obtener un usuarios, el error: ', error);
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        message: "No se encontraron usuarios",
+        data: null,
+      });
     }
+
+    res.status(200).json({
+      message: "Usuarios encontrados",
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error al obtener un usuarios, el error: ", error);
+  }
 }
 
 export async function updateUser(req, res) {
-    try {
-        const userRepository = AppDataSource.getRepository(User);
+  try {
+    const id = req.params.id;
+    const user = req.body;
 
-        const id = req.params.id;
-        const user = req.body;
-        
-        const userFound = await userRepository.findOne({
-            where: {id}
-        });
+    const userData = await updateUserService(id, user);
 
-        if(!userFound) {
-            return res.status(404).json({
-                message: "Usuario no encontrado",
-                data: null
-            });
-        }
-
-        await userRepository.update(id, user);
-
-        const userData = await userRepository.findOne({
-            where: {id}
-        });
-
-        res.status(200).json({
-            message: "Usuario actualizado correctamente",
-            data: userData
-        })
-    } catch (error) {
-        console.error("Error al actualizar un usuario: ", error);
-        res.status(500).json({ message: "Error interno en el servidor" });
+    if (!userData) {
+      res.status(404).json({
+        message: "Error al encontrar al usuario",
+        data: null,
+      });
     }
+
+    res.status(200).json({
+      message: "Usuario actualizado correctamente",
+      data: userData,
+    });
+  } catch (error) {
+    console.error("Error al actualizar un usuario: ", error);
+    res.status(500).json({ message: "Error interno en el servidor" });
+  }
 }
 
 export async function deleteUser(req, res) {
-    try {
-        const userRepository = AppDataSource.getRepository(User);
+  try {
+    const id = req.params.id;
 
-        const id = req.params.id;
+    const userDeleted = await deleteUserService(id);
 
-        const userFound = await userRepository.findOne({
-            where: {id}
-        });
-
-        if(!userFound) {
-            return res.status(404).json({
-                message: "Usuario no encontrado",
-                data: null
-            });
-        }
-
-        const userDeleted = await userRepository.remove(userFound);
-
-        res.status(200).json({
-            message: "Usuario eliminado correctamente",
-            data: userDeleted
-        })
-    } catch (error) {
-        console.error("Error al eliminar un usuario: ", error);
-        res.status(500).json({ message: "Error interno en el servidor" });
+    if (!userDeleted) {
+      return res.status(404).json({
+        message: "Usuario no encontrado",
+        data: null,
+      });
     }
+
+    res.status(200).json({
+      message: "Usuario eliminado correctamente",
+      data: userDeleted,
+    });
+  } catch (error) {
+    console.error("Error al eliminar un usuario: ", error);
+    res.status(500).json({ message: "Error interno en el servidor" });
+  }
 }
