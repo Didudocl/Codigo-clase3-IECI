@@ -3,7 +3,9 @@ import User from '../entity/user.entity.js';
 import { AppDataSource } from '../config/configDb.js';
 import { userBodyValidation } from '../validations/user.validation.js';
 import { createUserService, getUserService } from '../services/user.service.js';
-
+import { deleteUserService } from '../services/deleteUserService.js';
+import { updateUserService } from '../services/updateUserService.js';
+import { getUsersService } from '../services/getUsersService.js';
 
 export async function createUser(req, res) {
     try {
@@ -48,57 +50,47 @@ export async function getUser(req, res) {
         console.error('Error al obtener un usuario, el error: ', error);
     }
 }
-
 export async function getUsers(req, res) {
     try {
-        const userRepository = AppDataSource.getRepository(User);
+        const users = await getUsersService();
 
-        const users = await userRepository.find();
-
-        if(!users || users.length === 0) {
+        if (!users) {
             return res.status(404).json({
                 message: "No se encontraron usuarios",
                 data: null
-            })
+            });
         }
 
         res.status(200).json({
             message: "Usuarios encontrados",
             data: users
-        })
+        });
     } catch (error) {
-        console.error('Error al obtener un usuarios, el error: ', error);
+        console.error('Error al obtener usuarios: ', error);
+        res.status(500).json({ message: "Error interno del servidor" });
     }
 }
+export async function updateUser(req,res) {
+    const { id } = req.params;
+    const { nombreCompleto, email} = req.body;
+    if (!id || !nombreCompleto || !email){
+        return res.status(400).json({ message: "Faltan campos requeridos: id, nombreCompleto o email" });
+    }
 
-export async function updateUser(req, res) {
     try {
-        const userRepository = AppDataSource.getRepository(User);
+        const userData =await updateUserService(id, req.body);
 
-        const id = req.params.id;
-        const user = req.body;
-        
-        const userFound = await userRepository.findOne({
-            where: {id}
-        });
-
-        if(!userFound) {
+        if (!userData) {
             return res.status(404).json({
                 message: "Usuario no encontrado",
                 data: null
             });
         }
 
-        await userRepository.update(id, user);
-
-        const userData = await userRepository.findOne({
-            where: {id}
-        });
-
         res.status(200).json({
             message: "Usuario actualizado correctamente",
             data: userData
-        })
+        });
     } catch (error) {
         console.error("Error al actualizar un usuario: ", error);
         res.status(500).json({ message: "Error interno en el servidor" });
@@ -106,30 +98,23 @@ export async function updateUser(req, res) {
 }
 
 export async function deleteUser(req, res) {
+    const { id } = req.params;
+
     try {
-        const userRepository = AppDataSource.getRepository(User);
+        const userDeleted= await deleteUserService(id);
 
-        const id = req.params.id;
-
-        const userFound = await userRepository.findOne({
-            where: {id}
-        });
-
-        if(!userFound) {
-            return res.status(404).json({
-                message: "Usuario no encontrado",
-                data: null
-            });
+        if (!userDeleted) {
+            return res.status(404).json({message: 'Usuario no encontrado' });
         }
 
-        const userDeleted = await userRepository.remove(userFound);
-
         res.status(200).json({
-            message: "Usuario eliminado correctamente",
+            message: 'Usuario eliminado correctamente',
             data: userDeleted
-        })
+        });
     } catch (error) {
-        console.error("Error al eliminar un usuario: ", error);
-        res.status(500).json({ message: "Error interno en el servidor" });
+        console.error('Error al eliminar un usuario:', error);
+        res.status(500).json({message:'Error interno del servidor' });
     }
 }
+
+
