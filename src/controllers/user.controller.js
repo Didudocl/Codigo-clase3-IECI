@@ -2,7 +2,7 @@
 import User from '../entity/user.entity.js';
 import { AppDataSource } from '../config/configDb.js';
 import { userBodyValidation } from '../validations/user.validation.js';
-import { createUserService, getUserService, getUsersService, updateUserService, deleteUserService } from '../services/user.service.js';
+import { createUserService, getUserService, getUsersService, updateUserService, deleteUserService} from '../services/user.service.js';
 
 
 export async function createUser(req, res) {
@@ -51,7 +51,9 @@ export async function getUser(req, res) {
 
 export async function getUsers(req, res) {
     try {
-        const users = await getUsersService();
+        const userRepository = AppDataSource.getRepository(User);
+
+        const users = await userRepository.find();
 
         if(!users || users.length === 0) {
             return res.status(404).json({
@@ -71,12 +73,13 @@ export async function getUsers(req, res) {
 
 export async function updateUser(req, res) {
     try {
-        const userRepository = AppDataSource.getRepository(User);
-
         const id = req.params.id;
         const user = req.body;
-        
-        const userFound = await updateUserService(id, user);
+        const userRepository = AppDataSource.getRepository(id, user);
+
+        const userFound = await userRepository.findOne({
+            where: {id}
+        });
 
         if(!userFound) {
             return res.status(404).json({
@@ -85,7 +88,7 @@ export async function updateUser(req, res) {
             });
         }
 
-        await userRepository.update(id, user);
+        await userRepository.update(id, value);
 
         const userData = await userRepository.findOne({
             where: {id}
@@ -103,7 +106,7 @@ export async function updateUser(req, res) {
 
 export async function deleteUser(req, res) {
     try {
-        const userRepository = await deleteUserService();
+        const userRepository = AppDataSource.getRepository(User);
 
         const id = req.params.id;
 
@@ -111,7 +114,7 @@ export async function deleteUser(req, res) {
             where: {id}
         });
 
-        if(!userFound) {
+        if(!userDeleted) {
             return res.status(404).json({
                 message: "Usuario no encontrado",
                 data: null
