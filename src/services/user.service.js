@@ -40,61 +40,45 @@ export async function getUserService(id) {
 
 export async function getUsersService() {
     try {
-      const users = await User.find()
-        .select("-password")
-        .populate("roles")
-        .exec();
-      if (!users) return [null, "No hay usuarios"];
-  
-      return [users, null];
-    } catch (error) {
-      handleError(error, "user.service -> getUsers");
-    }
-  }
+        const userRepository = AppDataSource.getRepository(User);
+        const users = await userRepository.find();
 
-  async function updateUserService(id, user) {
-    try {
-      const userFound = await User.findById(id);
-      if (!userFound) return [null, "El usuario no existe"];
-  
-      const { username, email, rut, password, newPassword, roles } = user;
-  
-      const matchPassword = await User.comparePassword(
-        password,
-        userFound.password,
-      );
-  
-      if (!matchPassword) {
-        return [null, "La contraseña no coincide"];
-      }
-  
-      const rolesFound = await Role.find({ name: { $in: roles } });
-      if (rolesFound.length === 0) return [null, "El rol no existe"];
-  
-      const myRole = rolesFound.map((role) => role._id);
-  
-      const userUpdated = await User.findByIdAndUpdate(
-        id,
+        if(users.length === 0 || !users)
         {
-          username,
-          email,
-          rut,
-          password: await User.encryptPassword(newPassword || password),
-          roles: myRole,
-        },
-        { new: true },
-      );
-  
-      return [userUpdated, null];
+            console.log("No hay usuarios registrados");
+            return null;
+        }
+        
     } catch (error) {
-      handleError(error, "user.service -> updateUser");
+        console.error("Error al obtener los usuarios", error);
     }
-  }
+}
 
-  async function deleteUserService(id) {
+export async function updateUserService(id, user) {
     try {
-      return await User.findByIdAndDelete(id);
+        const userRepository = AppDataSource.getRepository(User);
+        const userFound = await userRepository.findOne({where:{id}});
+
+        if(!userFound)
+        {
+            console.log("No se encontró el usuario");
+        }
     } catch (error) {
-      handleError(error, "user.service -> deleteUser");
+        console.error("Error al actualizar el usuario", error);
     }
-  }
+}
+
+export async function deleteUserService(id) {
+    try {
+        const userRepository = AppDataSource.getRepository(User);
+        const userFound = await userRepository.findOne({where: {id}});
+        const userDeleted = await userRepository.remove(userFound);
+
+        if(!userDeleted){
+            console.error("Usuario no existe");
+        }
+
+    } catch (error) {
+        console.error("Error eliminando el usuario", error);
+    }
+}
